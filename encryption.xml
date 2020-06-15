@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Encryption">
+    <notes>
+These are some personal notes on using encryption with OBJPAS.
+    </notes>
+    <class name="TBlowFishEncryptStream" unit="Blowfish">
+        <notes>
+This allows for easy BlowFish-based encryption over any stream.
+        </notes>
+        <example>
+var
+  strm: TMemoryStream;
+  bf: TBlowFishEncryptStream;
+
+begin
+  strm := TMemoryStream.Create;
+  bf := TBlowFishEncryptStream.Create(BFKEY, Length(BFKEY), strm);
+  { Work with bf like a normal TStream. }
+  bf.Free;
+  strm.SaveToFile('encrypted.dat');
+  strm.Free;
+end.
+        </example>
+        <notes>
+The creation of BFKEY can be done in a couple ways, here's an example.
+        </notes>
+        <example>
+const
+  BFKEY: TBlowFishKey = (
+  $1b,$aa,....);
+        </example>
+    </class>
+</kdoc>

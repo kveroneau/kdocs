@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Pointers">
+    <notes>
+Pointers are considered one of the most advanced topics when you speak with most
+C developers, just because if they are used incorrectly, they can cause your
+*entire program to crash*.  While this is also true with Object Pascal, pointers
+I found to be much easier to work with in Object Pascal, even in original Pascal
+they were pretty easy to work with.  You see, in the C language, pointers are
+vital to anything, whereas in Pascal, pointers are usually more optional and are
+not required for everyday use.  The reason behind this is how C functions are called
+through Assembly language.  This calling method is called *cdecl* and *fastcall*,
+although modern Pascal compilers might use these C calling conventions if requested,
+Pascal actually handles all the dirty work for you behind the scenes.  So, in Pascal,
+you can actually pass almost any variable type to a pascal subroutine and never
+need to worry about the size, or fret about passing it as a pointer.  If you
+look at C libraries and their documentation, you may have noticed a lot of
+**asterisks** before each variable name, these mean that the parameter is expected
+to be a pointer.  Within the function call, the variable passed is then treated as
+a pointer, so you need to dereference it inside your function calls.  With Pascal,
+this isn't generally needed.  You can still pass pointers around, but it's not a
+requirement of the language to say pass a string or a structure over.  This is what
+makes Pascal pointers less used, but also a bit easier to learn, understand, and
+use.  Here I will explain what I have learned about pointers in Pascal, and what
+you can do with them, if you choose to use them.
+    </notes>
+    <section name="Pointers in Records">
+        <notes>
+If you have ever worked with LCL components, you have noticed on some items you
+can actually set a Pointer to some data on **.Data**, I have used this in a
+**TTreeItem** to add some metadata to an item in a tree view.  It might also be
+wise to use the same structure for each node, as it makes it much easier to
+parse.  So, what happens if you have a node which is a note, and another which
+is a URL, and another which is suppose to run a procedure?  This is where pointers
+within records comes in handy.  Here's a simple example with a command-line
+program to demonstrate this.
+        </notes>
+        <example>
+type
+  TItemType = (itNote, itURL, itProc, itPerson);
+  TItem = record
+    title: string;
+    itype: TItemType;
+    ptr: Pointer;
+  end;
+  PItem = ^TItem;
+  Str40 = string[40];
+  PStr40 = ^Str40;
+  TURL = string[255];
+  PURL = ^TURL;
+  TProc = procedure();
+  TPerson = record
+    name: string;
+    age: byte; // No-one ever ages past 255, right?
+  end;
+  PPerson = ^TPerson;
+
+function setNote(note: Str40): PStr40;
+begin
+  New(Result);
+  Result^:=note;
+end;
+
+function setURL(url: TURL): PURL;
+begin
+  New(Result);
+  Result^:=url;
+end;
+
+function setPerson(name: string; age: byte): PPerson;
+begin
+  New(Result);
+  Result^.name:=name;
+  Result^.age:=age;
+end;
+
+procedure showPerson(person: TPerson);
+begin
+  WriteLn('Name: ',person.name);
+  WriteLn('Age:  ',person.age);
+end;
+
+procedure callme();
+begin
+  WriteLn('Yay! I have been called!');
+end;
+
+procedure displayItem(item: PItem); // Use pointer for efficency on large data.
+var
+  proc: TProc;
+begin
+  WriteLn('Title: ',item^.title);
+  case item^.itype of
+    itNote: WriteLn('Note pointer: ',PStr40(item^.ptr)^);
+    itURL: WriteLn('URL pointer: ',PURL(item^.ptr)^);
+    itProc: begin
+      proc:=TProc(item^.ptr);
+      proc;
+    end;
+    itPerson: showPerson(TPerson(item^.ptr^));
+  end;
+  WriteLn('');
+end;
+
+procedure FreePointer(item: PItem);
+var
+  s: PStr40;
+  url: PURL;
+  person: PPerson;
+begin
+  if item^.ptr = nil then
+    Exit;
+  case item^.itype of
+    itNote: begin
+      s:=PStr40(item^.ptr);
+      Freemem(s);
+      item^.ptr:=nil;
+    end;
+    itURL: begin
+      url:=PURL(item^.ptr);
+      Freemem(url);
+      item^.ptr:=nil;
+    end;
+    itPerson: begin
+      person:=PPerson(item^.ptr);
+      Freemem(person);
+      item^.ptr:=nil;
+    end;
+  end;
+end;
+
+var
+  items: Array of TItem;
+  i: Integer;
+
+begin
+  SetLength(items, 4);
+  items[0].title:='A note';
+  items[0].itype:=itNote;
+  items[0].ptr:=setNote('This is an example note.');
+  items[1].title:='kDocs';
+  items[1].itype:=itURL;
+  items[1].ptr:=setURL('http://tech406.com/kdocs/');
+  items[2].title:='A Procedure.';
+  items[2].itype:=itProc;
+  items[2].ptr:=@callme;
+  items[3].title:='A real life human being';
+  items[3].itype:=itPerson;
+  items[3].ptr:=setPerson('Kevin', 36);
+  for i:=0 to 3 do
+    displayItem(@items[i]);
+  for i:=0 to 3 do
+    FreePointer(@items[i]);
+end.
+        </example>
+        <notes>
+In the above example code, you could use the *PItem* pointer on your **TTreeItem.Data**
+property.  Then within your code, you can check the *itype* and handle the *ptr*
+accordingly.  One thing to note with short running programs on modern operating
+systems...  The OS actually keeps track of the heap used by the program, and will
+free all of the memory associated with the program when it terminates.  Pointers
+generally do not need to be freed in a program like this, as it is very short
+running, and returns control to the OS almost immediately.  If you are creating
+a desktop application, or a web application, you will need to keep track of the
+memory you allocate through pointers and free them once you have finished with
+them.
+
+[When you exit a C application, is the malloc-ed memory automatically freed?](https://stackoverflow.com/questions/2213627/when-you-exit-a-c-application-is-the-malloc-ed-memory-automatically-freed)
+        </notes>
+    </section>
+    <section name="Using flat memory in Pascal">
+        <notes>
+Sometimes you need to allocate a large flat memory model to either work or store
+some sort of large binary data.  I personally use this to write virtual machines
+and emulators.  Here is some Pascal code which can create a large space of
+virtual heap memory which you can use for any purpose, such as loading a ROM for
+an emulator, reading a binary file, or anything else you might think of.  This
+is a class I wrote for the 6502 emulator, but the class can be used for other
+similar purposes:
+        </notes>
+        <example>
+  { T6502Memory }
+
+  T6502Memory = class(TStream)
+  private
+    FMemory: Pointer;
+    FPosition: PtrInt;
+    FIOMap: Array[0..$ff] of TIOCallbackFunc;
+    procedure ResetIOMap;
+    function CStackPointer: Word;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure setB(addr: Word; value: Byte);
+    function getB(addr: Word): Byte;
+    procedure setW(addr, value: Word);
+    function getW(addr: Word): Word;
+    function Read(var Buffer; Count: Longint): Longint; override;
+    function Write(const Buffer; Count: Longint): Longint; override;
+    function Seek(const Offset: int64; Origin: TSeekOrigin): Longint;
+    procedure LoadFromStream(Stream: TStream);
+    procedure LoadFromFile(const FileName: string);
+    procedure SaveToStream(Stream: TStream);
+    procedure SaveToFile(const FileName: string);
+    function HandleIOCall(addr: Word): Boolean;
+    procedure SetIOCallback(addr: Byte; callback: TIOCallbackFunc);
+    property Position: PtrInt read FPosition write FPosition;
+    property csp: Word read CStackPointer;
+  end;
+        </example>
+        <notes>
+Below I will go through each routine above, you may also notice that this is
+inherited from a **TStream**, so it makes it really easy to pass around binary
+data in your program.
+        </notes>
+        <example>
+{ T6502Memory }
+
+procedure T6502Memory.ResetIOMap;
+var
+  i: Byte;
+begin
+  for i := 0 to $ff do
+    FIOMap[i]:=nil; { Ensure all pointers are nil! }
+end;
+        </example>
+        <notes>
+The above is very specific to the 6502 and resets the IO memory mapper.
+        </notes>
+        <example>
+function T6502Memory.CStackPointer: Word;
+begin
+  Result:=getW($80); { Standard C stack pointer location for cc65 runtime. }
+end;
+        </example>
+        <notes>
+This is very specific to the uber popular **cc65** compiler kit, it holds the
+zero-page location of the C stack pointer.
+        </notes>
+        <example>
+constructor T6502Memory.Create;
+begin
+  FMemory:=AllocMem(MSize);
+  ResetIOMap;
+end;
+        </example>
+        <notes>
+This is the class contructor, we allocate the memory for our pointer, and call
+the IO reset procedure.
+        </notes>
+        <example>
+destructor T6502Memory.Destroy;
+begin
+  ResetIOMap; { Nil all function pointers before we destrory instance. }
+  Freemem(FMemory);
+  FMemory:=nil;
+  inherited Destroy;
+end;
+        </example>
+        <notes>
+This is just the class destructor, nils all pointers.
+        </notes>
+        <example>
+procedure T6502Memory.setB(addr: Word; value: Byte);
+begin
+  Byte((FMemory+addr)^):=value;
+end;
+        </example>
+        <notes>
+Here is how you can use a RAW pointer to write any binary data into it.
+        </notes>
+        <example>
+function T6502Memory.getB(addr: Word): Byte;
+begin
+  Result:=Byte((FMemory+addr)^);
+end;
+        </example>
+        <notes>
+And this is how you read data from a RAW pointer.
+        </notes>
+        <example>
+procedure T6502Memory.setW(addr, value: Word);
+begin
+  setB(addr, value and $ff);
+  setB(addr+1, (value shr 8) and $ff);
+end;
+        </example>
+        <notes>
+There are many ways to write 16-bit integers, but I choose the classic method.
+        </notes>
+        <example>
+function T6502Memory.getW(addr: Word): Word;
+begin
+  Result:=getB(addr)+(getB(addr+1) shl 8);
+end;
+        </example>
+        <notes>
+This reads a 16-bit integer from the RAW pointer, pretty simple stuff.
+        </notes>
+        <example>
+function T6502Memory.Read(var Buffer; Count: Longint): Longint;
+begin
+  Result:=0;
+  if (FPosition&lt;MSize) and (FPosition&gt;=0) then
+  begin
+    Result:=Count;
+    if (Result>(MSize-FPosition)) then
+      Result:=MSize-FPosition;
+    Move((FMemory+FPosition)^, Buffer, Result);
+    FPosition:=FPosition+Result;
+  end;
+end;
+        </example>
+        <notes>
+This is used for compatibility with other TStreams, so you can move data between
+two TStreams easily, it also allows you to read out a RAW data buffer.
+        </notes>
+        <example>
+function T6502Memory.Write(const Buffer; Count: Longint): Longint;
+begin
+  Result:=0;
+  if (FPosition&lt;MSize) and (FPosition&gt;=0) then
+  begin
+    Result:=Count;
+    if (Result&gt;(MSize-FPosition)) then
+      Result:=MSize-FPosition;
+    Move(Buffer, (FMemory+FPosition)^, Result);
+    FPosition:=FPosition+Result;
+  end;
+end;
+        </example>
+        <notes>
+Same use as the last function, except this one writes data into the RAW pointer.
+        </notes>
+        <example>
+function T6502Memory.Seek(const Offset: int64; Origin: TSeekOrigin): Longint;
+begin
+  case Word(Origin) of
+    soFromBeginning : FPosition:=Offset;
+    soFromEnd       : FPosition:=MSize+Offset;
+    soFromCurrent   : FPosition:=FPosition+Offset;
+  end;
+  Result:=FPosition;
+end;
+        </example>
+        <notes>
+A basic seek which is compatible with other TStreams.
+        </notes>
+        <example>
+procedure T6502Memory.LoadFromStream(Stream: TStream);
+var
+  Count: Longint;
+begin
+  Count:=Stream.Size;
+  Stream.Position:=0;
+  if Stream.Size &gt; (MSize-FPosition) then
+    Count:=MSize-FPosition;
+  Stream.ReadBuffer((FMemory+FPosition)^, Count);
+end;
+        </example>
+        <notes>
+I referenced an existing TStream to get this code, used to transfer data between
+two TStreams.
+        </notes>
+        <example>
+procedure T6502Memory.LoadFromFile(const FileName: string);
+var
+  S: TFileStream;
+begin
+  S:=TFileStream.Create(FileName,fmOpenRead or fmShareDenyWrite);
+  try
+    LoadFromStream(S);
+  finally
+    S.Free;
+  end;
+end;
+        </example>
+        <notes>
+Same as the above, but loads the data from a file and calls the above procedure.
+        </notes>
+        <example>
+procedure T6502Memory.SaveToStream(Stream: TStream);
+begin
+  Stream.WriteBuffer(FMemory^, MSize);
+end;
+        </example>
+        <notes>
+You should get the idea on what's going on here.  Use Seek to set the exact position.
+        </notes>
+        <example>
+procedure T6502Memory.SaveToFile(const FileName: string);
+var
+  S: TFileStream;
+begin
+  S:=TFileStream.Create (FileName,fmCreate);
+  try
+    SaveToStream(S);
+  finally
+    S.Free;
+  end;
+end;
+        </example>
+        <notes>
+Same as the above, except it saves to a file.
+        </notes>
+        <example>
+function T6502Memory.HandleIOCall(addr: Word): Boolean;
+var
+  v: Byte;
+begin
+  v:=addr and $ff;
+  Result:=False;
+  if Assigned(FIOMap[v]) then
+    Result:=FIOMap[v](addr);
+end;
+        </example>
+        <notes>
+This is specific to the 6502, checks if a function pointer exists, and calls the
+function if one is there.
+        </notes>
+        <example>
+procedure T6502Memory.SetIOCallback(addr: Byte; callback: TIOCallbackFunc);
+begin
+  FIOMap[addr]:=callback;
+end;
+        </example>
+        <notes>
+Again, 6502 specific, sets a pointer on the IO memory map to a function call.
+        </notes>
+    </section>
+</kdoc>

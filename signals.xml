@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="UNIX Signals">
+    <notes>
+What are UNIX signals you might be asking?  It is a feature in every UNIX-like
+operating system, such as BSD, Linux, and MacOS X, which allows a process to
+handle an external signal from either the shell, or another process.  You could
+call it a form of Inter-process communications, but it does not allow data to
+be passed into the process, and the process can't say anything back to the
+process which sent the signal...  Now you might be thinking that this is pretty
+useless...  That is far from the truth, signals have a large part on UNIX systems
+when it comes to daemon processes, such as servers and services which run when
+the machine starts up.  If you are thinking of writing a Linux service, this is
+the document for you!  Here's a list of common signals which are used on every
+UNIX-like system in the modern day:
+
+  * **SIGTERM**: This is sent to the process when you do `kill 48373`, it allows
+    your process to gracefully shutdown, and when you shutdown a
+    modern UNIX-like system, this is the first signal the init system
+    will send all the leftover processes running on the machine, asking
+    them *nicely* to stop.
+  * **SIGKILL**: This signal cannot be trapped by the program, and is sent to
+    immediately *kill* the process, this is also sent by the init
+    system after a specific period of time if a *SIGTERM* failed to
+    stop the process.  It is also used by system administrators to
+    stop processes which did not stop using the traditional kill
+    method described above.
+  * **SIGINT**:  If you do not redirect input, pressing Ctrl-C on your keyboard
+    will send this signal to the current foreground process, this
+    is very useful when you just want to stop a program you are
+    currently running.  However, it can be very useful to trap this
+    signal in your code, so that you can handle what happens when
+    the user presses Ctrl-C, such as performing a graceful shutdown,
+    or otherwise notifying the end-user that they should be stopping
+    the process a different way.  Normally, it should just exit the
+    current process.  If you use the `crt` unit, the keyboard input
+    is redirected, and this signal is never sent to the process.
+  * **SIGHUP**:  This one is a bit of a relic in naming, it stands for *Hang Up*,
+    in modern UNIX programs, such as Apache and nginx, it will tell
+    the process to re-read it's configuration files and reload itself,
+    but keep all the existing socket connections open.  This is a very
+    useful signal for modern web servers, as reloading config will not
+    disrupt traffic flow to your web server.  If you write a service,
+    and would like to implement an easy way to reload it's config files,
+    this is the most standard choice.
+  * **SIGUSR?**: There are two USR signals, USR1 and USR2, these can be used for
+    whatever purposes you see fit.  Some processes do use these signals
+    to force reload the config files, and for other tasks.  An example
+    is you could dump some debugging info or statistics into the log
+    file if this signal is received.
+
+With all the most useful signals out of the way, let's get down to some example code.
+    </notes>
+    <example>
+uses BaseUnix;
+
+Var
+   oa,na : PSigActionRec;
+
+Procedure DoSig(sig : cint);cdecl;
+
+begin
+   writeln('Receiving signal: ',sig);
+end;
+
+begin
+   new(na);
+   new(oa);
+   na^.sa_Handler:=SigActionHandler(@DoSig);
+   fillchar(na^.Sa_Mask,sizeof(na^.sa_mask),#0);
+   na^.Sa_Flags:=0;
+   {$ifdef Linux}               // Linux specific
+     na^.Sa_Restorer:=Nil;
+   {$endif}
+   if fpSigAction(SIGINT,na,oa)&lt;&gt;0 then
+     begin
+     writeln('Error: ',fpgeterrno,'.');
+     halt(1);
+     end;
+   Writeln ('Hit Ctrl-C or press &lt;ENTER&gt; to exit');
+   readln;
+end.
+    </example>
+    <notes>
+Most of the above example it literally ripped from the example in the RTL:
+    </notes>
+    <ref section="rtl" unit="baseunix">fpsigaction</ref>
+    <section name="Signal handler unit">
+        <notes>
+I now present you with a powerful Pascal unit you can use in your code to handle
+signals in any type of application, command-line, GUI, service.  All you need to
+do to use it, is add it to your `uses` clause, and in your idle loop, check for
+the following booleans from within the Unit, they will be set to `True` when that
+signal has been sent to the application, you should set the boolean back to False
+after successfully handling the signal to prevent it from triggering twice.
+        </notes>
+        <example>
+unit UnixSignals;
+
+{$mode objfpc}{$H+}
+
+interface
+
+var
+  CBreak, TermSignal, HangUp, User1Sig, User2Sig: Boolean;
+
+implementation
+
+uses BaseUnix;
+
+procedure handleSignal(sig: cint); cdecl;
+begin
+  case sig of
+    SIGINT: CBreak:=True;
+    SIGTERM: TermSignal:=True;
+    SIGHUP: HangUp:=True;
+    SIGUSR1: User1Sig:=True;
+    SIGUSR2: User2Sig:=True;
+  end;
+end;
+
+procedure configureSignal(sig: cint);
+var
+  oa,na: psigactionrec;
+begin
+  New(oa);
+  New(na);
+  na^.sa_handler:=sigactionhandler(@handleSignal);
+  FillChar(na^.sa_mask, SizeOf(na^.sa_mask), #0);
+  na^.sa_flags:=0;
+  {$ifdef Linux}
+  na^.sa_restorer:=Nil;
+  {$endif}
+  if FPSigaction(sig, na, oa) &lt;&gt; 0 then
+  begin
+    WriteLn('Unable to trap signal: ',sig);
+    Halt(1);
+  end;
+end;
+
+initialization
+  CBreak:=False;
+  TermSignal:=False;
+  HangUp:=False;
+  User1Sig:=False;
+  User2Sig:=False;
+  configureSignal(SIGINT);
+  configureSignal(SIGTERM);
+  configureSignal(SIGHUP);
+  configureSignal(SIGUSR1);
+  configureSignal(SIGUSR2);
+end.
+        </example>
+        <notes>
+And, yes I am very aware of the fact that those two pointers are never freed.
+This was done on purpose, as signal handling is active for the remaining of the
+process, and Unix kernels are modern enough that when the process does eventually
+end, all memory allocated by that process is freed by the operating systems'
+internal memory manager, so there really isn't a good reason to keep track of
+those pointers and free them at a later time.  We only care that those memory
+structures are always available to the UNIX signal handler, and since Pascal
+has no garbage collection, we do not have to worry about those structures ever
+being automatically destroyed.
+        </notes>
+    </section>
+</kdoc>

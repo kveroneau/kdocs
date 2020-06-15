@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Welcome to kDocs!">
+    <notes>
+kDocs is a small documentation framework I created in a well forgotten, but still
+very usable and powerful browser-based template system which is still included in
+modern web browsers til this day, **XSLT**.  Feel free to *right-click* this
+document and *view source*.
+    </notes>
+    <link kdoc="about">More about kDocs XSLT framework</link>
+    <notes>
+Anyways, this website isn't about showcasing *kDocs*, it is about my passion for
+Pascal, specially the under appreciated and powerful ObjectPascal dialect.
+    </notes>
+    <section name="Why ObjectPascal">
+        <notes>
+Why not?  I used *Turbo Pascal 4.0* when I was about 17, but was always intrigued
+in the language for many years prior when I met my parent's friends whom were
+in either a software development job, or were taking computer science in university.
+This was back in the heyday when Borland was **the** software development kit king.
+Modern day Pascal is just as fast when it comes down to compiling very large
+programs, which was one reason it was extremely popular in the 80s and 90s. In the
+modern day when comparing a large ObjectPascal program to a C++ program in terms
+of compile time, ObjectPascal still beats C++, Java, and many other modern compiling
+languages.  Here's a nice overview of some of the features in Pascal/ObjectPascal
+I really like:
+
+  * Unit files are easier than header files
+  * All variables are declared in a *known location*
+  * Easily supports both structured and object programming
+  * Extremely easy to use standard C libraries, **h2pas**
+  * Overall syntax is a pleasure to write, read, and understand
+  * Has a very large standard library included out of the box
+  * Can truly create compiled native cross-platform binary programs
+    * I cannot state this point enough, has many targets as well.
+  * Has a very powerful *RAD IDE* to design and develop cross-platform GUI apps.
+  * Delphi XE can actually turn a desktop app into a native iOS and Android app.
+  * Full backwards compatibility with past versions, all the way back to Turbo Pascal.
+    * No other program language can say that they are this backwards compatible.
+    * Your code will always re-compile in the latest version of the compiler!
+  * And much more...
+        </notes>
+    </section>
+    <section name="Personal development history">
+        <notes>
+For those whom do not know me, I have been programming in Python since about 2010,
+it was my sole language of choice for many many years.  Prior to Python, I was
+developing websites in PHP(*So glad I moved on*) for many years since about 2001.
+Before PHP, I was playing around with Perl CGI, ASP, and of course Visual Basic.
+Actually, prior to PHP, I was mainly a BASIC developer in my childhood, and having
+the chance to play around with Turbo Pascal in those days was a real eye-opener.
+        </notes>
+        <notes>
+In recent years, I have been wanting to create redistributable programs, while
+this can work in Python, it is definately not the best tool for the job.  It may
+run perfectly on my Debian machine, but if I decided to have it run on either
+MacOS or Windows...  It is a **HUGE** pain.  Python also does not fully support
+the native GUI on these operating systems, as a result I need to either learn
+*GTK* or *Qt*.  Python does have *Tk* included, along with support for *wxWindows*,
+but these GUI toolkits are far from ideal when you wish to port your program to
+other operating systems.  This is where my research into a tool or language which
+is both operating system and GUI toolkit agnostic comes into play...
+        </notes>
+        <notes>
+Before settling on ObjectPascal, I did look into a few other options.  I checked
+out Java, as I was also interested in developing for Android, and thought learning
+Java would be good for both creating desktop apps and Android apps... However,
+as some of you might know, Java on the desktop is sort of a dying beast.  Users
+now need to install the Java Runtime Environment on their PCs, or the installer
+needs to include it.  This leads to a very large program size, with a not so good
+trade-off.  It worked for Minecraft, but I doubt it would work for regular desktop
+applications...  So the hunt continued.
+        </notes>
+        <notes>
+I then looked into learning how C code could be portable by working with some
+open source C programs which have already been ported to multiple operating systems.
+This is when I became the temporary maintainer of **sdlBasic** project, a BASIC
+interpreter aimed at making games with a similar dialect to *AMOS BASIC*.  I had
+a lot of trouble trying to get it to properly compile on Windows and later OS X.
+In the end, I gave up on trying to use C as a portable language, as trying to
+compile Linux GCC programs on Windows was a huge pain, let alone trying to get
+SDL to work properly, I'd imagine trying to cross-compile a full GUI program
+would have been a nightmare to maintain.
+        </notes>
+    </section>
+    <section name="Cross-platform GUI made easy">
+        <notes>
+This is what ultimately led me to dive back into Pascal once again in my adult
+years.  My has Pascal evolved, not only can I compile a Turbo Pascal 4.0 program
+in **FreePascal**, but I can also compile modern **Delphi** and **ObjectPascal**
+programs with little to no extra effort.  Have I found heaven on Earth?  I haven't
+seen any programming language take backwards compatibility so seriously as I've seen
+in the FreePascal community.  I like to know that if I build a program today,
+that it can be easily recompiled on a computer of the future with no additional
+effort, and this is what FreePascal truly delivers.
+        </notes>
+        <notes>
+Now lets add some fancy icying to the cake...  With Lazarus, the FreePascal RAD
+IDE, you do not need to worry about which GUI Toolkit you need to target, you just
+need to think about the layout, business logic, and most importantly how your program
+will work.  The LCL Toolkit takes care of making sure your compiled program looks
+native on every operating system you build on.  On Linux, you can most definately
+choose between either GTK and Qt, which is great, as you can easily use the same
+source code and build the program for both KDE and GNOME users with no additional
+effort.  Once you are ready to take your program mainstream and jump to both
+MacOS X and Windows, in most cases you can actually generate the .app and .exe
+files directly on your Linux box.  However, I personally prefer to do the building
+on those operating systems respectively, as I can see how the GUI renders natively.
+This is especially true for OS X, as it has the *global menu bar* you need to worry
+about, so you might need to slightly adjust your Form to remove the gap where
+the embedded menu bar on most operating systems usually is.  But overall, that is
+really all that needs to be done.  If you use the standard GUI components, and the
+proper ObjectPascal classes, all your code will just compile fine on every OS.
+        </notes>
+        <notes>
+And that final statement above is exactly why I chose **ObjectPascal** over
+anything else.  No other language that I am aware of can do this with such little
+effort.  It's nothing short of amazing to see a GUI program created on your Linux
+box just compile with no code changes on Windows and OS X, and also use their
+native look and feel.  It makes your program look more professional when the
+end-user sees it using the native GUI toolkit of their OS, the program fits in
+with the user's other applications.  Because of this, ObjectPascal feels like
+Python, where I can run a script on another operating system, and it will usually
+run fine if I use the libraries provided by Python, but is native code, and a
+much smaller distribution size.
+        </notes>
+    </section>
+</kdoc>

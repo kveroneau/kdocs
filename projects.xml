@@ -1,0 +1,417 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Project Templates">
+    <notes>
+This page here will go through the default Lazarus project templates to explain
+what each use-case *might* be.
+    </notes>
+    <section name="Application">
+        <notes>
+A graphical Free Pascal application using the cross-platform LCL library for its GUI.
+        </notes>
+        <example>
+program Project1;
+
+{$mode objfpc}{$H+}
+
+uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
+  Interfaces, // this includes the LCL widgetset
+  Forms, unit1
+  { you can add units after this };
+
+{$R *.res}
+
+begin
+  RequireDerivedFormResource:=True;
+  Application.Scaled:=True;
+  Application.Initialize;
+  Application.CreateForm(TForm1, Form1);
+  Application.Run;
+end.
+        </example>
+    </section>
+    <section name="Simple Program">
+        <notes>
+A most simple Free Pascal command line program.
+        </notes>
+        <example>
+program Project1;
+
+begin
+end.
+        </example>
+    </section>
+    <section name="Program">
+        <notes>
+A Free Pascal command line program with some useful settings added.
+        </notes>
+        <example>
+program Project1;
+
+{$mode objfpc}{$H+}
+
+uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
+  Classes
+  { you can add units after this };
+
+begin
+end.
+        </example>
+    </section>
+    <section name="Console Program">
+        <notes>
+A Free Pascal command line program using TCustomApplication to easily check
+command line options, handling exceptions, etc.
+        </notes>
+        <notes>
+Creating this type of project will display a dialog box with some project options.
+These options declare the application class name, application title and some
+code generation booleans.  These options are specific to a console program, the
+below example is when everything is left as default, all booleans checked.
+        </notes>
+        <example>
+program Project1;
+
+{$mode objfpc}{$H+}
+
+uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
+  Classes, SysUtils, CustApp
+  { you can add units after this };
+
+type
+
+  { TMyApplication }
+
+  TMyApplication = class(TCustomApplication)
+  protected
+    procedure DoRun; override;
+  public
+    constructor Create(TheOwner: TComponent); override;
+    destructor Destroy; override;
+    procedure WriteHelp; virtual;
+  end;
+
+{ TMyApplication }
+
+procedure TMyApplication.DoRun;
+var
+  ErrorMsg: String;
+begin
+  // quick check parameters
+  ErrorMsg:=CheckOptions('h', 'help');
+  if ErrorMsg&lt;&gt;'' then begin
+    ShowException(Exception.Create(ErrorMsg));
+    Terminate;
+    Exit;
+  end;
+
+  // parse parameters
+  if HasOption('h', 'help') then begin
+    WriteHelp;
+    Terminate;
+    Exit;
+  end;
+
+  { add your program here }
+
+  // stop program loop
+  Terminate;
+end;
+
+constructor TMyApplication.Create(TheOwner: TComponent);
+begin
+  inherited Create(TheOwner);
+  StopOnException:=True;
+end;
+
+destructor TMyApplication.Destroy;
+begin
+  inherited Destroy;
+end;
+
+procedure TMyApplication.WriteHelp;
+begin
+  { add your help code here }
+  writeln('Usage: ', ExeName, ' -h');
+end;
+
+var
+  Application: TMyApplication;
+begin
+  Application:=TMyApplication.Create(nil);
+  Application.Title:='My Application';
+  Application.Run;
+  Application.Free;
+end.
+        </example>
+    </section>
+    <section name="Library">
+        <notes>
+A Free Pascal shared library (.dll under Windows, .so under Linux, .dynlib under
+MacOS X).
+        </notes>
+        <example>
+library Project1;
+
+{$mode objfpc}{$H+}
+
+uses
+  Classes
+  { you can add units after this };
+
+begin
+end.
+        </example>
+    </section>
+    <section name="InstantFPC program">
+        <notes>
+Single file Free Pascal program executed by InstantFPC
+        </notes>
+        <example>
+#!/usr/bin/env instantfpc
+{$mode objfpc}{$H+}
+uses
+  Classes, SysUtils;
+
+begin
+
+end.
+        </example>
+    </section>
+    <section name="HTTP server Application">
+        <notes>
+Complete HTTP Server program in Free Pascal using
+webmodules.  The program source is automatically maintained by Lazarus.
+        </notes>
+        <notes>
+Choosing this project template will open a dialog box with some options available.
+It will allow to register a location to serve static files from, a port to listen
+on, and if threads should be used to serve requests in.  The first example will
+be with the default options of nothing checked.
+        </notes>
+        <example>
+program httpproject1;
+
+{$mode objfpc}{$H+}
+
+uses
+  fphttpapp, unit1;
+
+begin
+  Application.Title:='httpproject1';
+  Application.Port:=8080;
+  Application.Initialize;
+  Application.Run;
+end.
+        </example>
+        <notes>
+When all options are selected only the **LPR** main program file is different.
+        </notes>
+        <example>
+program httpproject1;
+
+{$mode objfpc}{$H+}
+
+uses
+  fpwebfile,
+  fphttpapp, unit1;
+
+begin
+  RegisterFileLocation('s','/static/directory');
+  Application.Title:='httpproject1';
+  Application.Port:=8080;
+  Application.Threaded:=True;
+  Application.Initialize;
+  Application.Run;
+end.
+        </example>
+        <link kdoc="units">Web Module</link>
+    </section>
+    <section name="CGI Application">
+        <notes>
+A CGI(Common Gateway Interface) program in Free Pascal using webmodules. The
+program source is automatically maintained by Lazarus.
+        </notes>
+        <example>
+program cgiproject1;
+
+{$mode objfpc}{$H+}
+
+uses
+  fpCGI, unit1;
+
+begin
+  Application.Title:='cgiproject1';
+  Application.Initialize;
+  Application.Run;
+end.
+        </example>
+        <link kdoc="units">Web Module</link>
+    </section>
+    <section name="Custom CGI Application">
+        <notes>
+A CGI(Common Gateway Interface) program in Free Pascal. The program source is
+automatically maintained by Lazarus.
+        </notes>
+        <example>
+program cgiproject1;
+
+{$mode objfpc}{$H+}
+
+uses
+  Classes, SysUtils, httpDefs, fpweb, custweb, custcgi;
+
+Type
+  TMyCGIHandler = Class(TCgiHandler)
+  Public
+    Procedure HandleRequest(ARequest : Trequest; AResponse : TResponse); override;
+  end;
+
+
+  TMyCGIApp = Class(TCustomCGIApplication)
+  Protected
+   function InitializeWebHandler: TWebHandler; override;
+  end;
+
+
+Procedure TMyCGIHandler.HandleRequest(ARequest : Trequest; AResponse : TResponse);
+
+begin
+  // Your code here
+end;
+
+
+Function TMyCGIApp.InitializeWebHandler: TWebHandler; 
+begin
+  Result:=TMyCgiHandler.Create(self);
+end;
+
+
+begin
+  With TMyCGIApp.Create(Nil) do
+    try
+      Initialize;
+      Run;
+    finally
+      Free;
+    end;
+end.
+        </example>
+    </section>
+    <section name="Apache Module">
+        <notes>
+An Apache loadable module in Free Pascal using webmodules. The main library file
+is automatically maintained by Lazarus.
+        </notes>
+        <example>
+Library mod_apache1;
+
+{$mode objfpc}{$H+}
+
+Uses
+{$ifdef unix}
+  cthreads,
+{$endif}
+  httpd, custapache, fpApache, unit1;
+
+Const
+
+{ The following constant is used to export the module record. It must 
+  always match the name in the LoadModule statement in the apache
+  configuration file(s). It is case sensitive !}
+  ModuleName='mod_apache1';
+
+{ The following constant is used to determine whether the module will
+  handle a request. It should match the name in the SetHandler statement
+  in the apache configuration file(s). It is not case sensitive. }
+
+  HandlerName=ModuleName;
+
+Var
+  DefaultModule : module; {$ifdef unix} public name ModuleName;{$endif unix}
+
+Exports defaultmodule name ModuleName;
+
+begin
+  Application.Title:='mod_apache1';
+  Application.ModuleName:=ModuleName;
+  Application.HandlerName:=HandlerName;
+  Application.SetModuleRecord(DefaultModule);
+  Application.Initialize;
+end.
+        </example>
+        <link kdoc="units">Web Module</link>
+    </section>
+    <section name="FastCGI Application">
+        <notes>
+A FastCGI(Common Gateway Interface) program in Free Pascal using webmodules. The
+program source is automatically maintained by Lazarus.
+        </notes>
+        <example>
+program fcgiproject1;
+
+{$mode objfpc}{$H+}
+
+uses
+  fpFCGI, unit1;
+
+begin
+  Application.Title:='fcgiproject1';
+  { Uncomment the port setting here if you want to run the 
+    FastCGI application stand-alone (e.g. for NGINX) }
+  // Application.Port:=2015; // For example
+  Application.Initialize;
+  Application.Run;
+end.
+        </example>
+        <link kdoc="units">Web Module</link>
+    </section>
+    <section name="Custom FastCGI Application">
+        <notes>
+A FastCGI(Common Gateway Interface) program in Free Pascal. The program source
+is automatically maintained by Lazarus.
+        </notes>
+        <example>
+program fcgiproject1;
+
+{$mode objfpc}{$H+}
+
+uses
+  Classes,SysUtils,httpDefs,custfcgi;
+
+Type
+  TFCGIApp = Class(TCustomFCGIApplication)
+  Public
+    Procedure HandleRequest(ARequest : Trequest; AResponse : TResponse); override;
+  end;
+
+Procedure TFCGIApp.HandleRequest(ARequest : Trequest; AResponse : TResponse);
+
+begin
+  // Your code here
+end;
+
+begin
+  With TFCGIApp.Create(Nil) do
+    try
+      { Uncomment the port setting here if you want to run the 
+       FastCGI application stand-alone (e.g. for NGINX) }
+      // Port:=2015; // For example
+      Initialize;
+      Run;
+    finally
+      Free;
+    end;
+end.
+        </example>
+    </section>
+</kdoc>

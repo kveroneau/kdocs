@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Module Templates">
+    <notes>
+This page will go through the included *module templates* available in Lazarus.
+    </notes>
+    <section name="Pascal unit">
+        <notes>
+Creates a new pascal unit.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils;
+
+implementation
+
+end.
+        </example>
+    </section>
+    <section name="Form">
+        <notes>
+Create a new unit with a LCL form.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, Forms, Controls, Graphics, Dialogs;
+
+type
+  TForm1 = class(TForm)
+  private
+
+  public
+
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.lfm}
+
+end.
+        </example>
+    </section>
+    <section name="Data Module">
+        <notes>
+Create a new unit with a datamodule.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils;
+
+type
+  TDataModule1 = class(TDataModule)
+  private
+
+  public
+
+  end;
+
+var
+  DataModule1: TDataModule1;
+
+implementation
+
+{$R *.lfm}
+
+end.
+        </example>
+    </section>
+    <section name="Frame">
+        <notes>
+Create a new unit with a frame.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, Forms, Controls;
+
+type
+  TFrame1 = class(TFrame)
+  private
+
+  public
+
+  end;
+
+implementation
+
+{$R *.lfm}
+
+end.
+        </example>
+    </section>
+    <section name="Text">
+        <notes>
+Create a new empty text file.
+        </notes>
+    </section>
+    <section name="InstantFPC script">
+        <notes>
+Single file program using InstantFPC to compile and execute.
+        </notes>
+        <example>
+#!/usr/bin/instantfpc
+{$mode objfpc}{$H+}
+
+uses Classes, SysUtils;
+
+begin
+
+end.
+        </example>
+    </section>
+    <section name="SQL Script file">
+        <notes>
+Create a new SQL Script file
+        </notes>
+    </section>
+    <section name="Web DataProvider Module">
+        <notes>
+A datamodule to handle data requests for WEB(HTTP) applications using WebDataProvider
+components.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, HTTPDefs, websession, fpHTTP, fpWeb, fpwebdata;
+
+type
+  TFPWebProviderDataModule1 = class(TFPWebProviderDataModule)
+  private
+
+  public
+
+  end;
+
+var
+  FPWebProviderDataModule1: TFPWebProviderDataModule1;
+
+implementation
+
+{$R *.lfm}
+
+initialization
+  RegisterHTTPModule('TFPWebProviderDataModule1', TFPWebProviderDataModule1);
+end.
+        </example>
+    </section>
+    <section name="Web JSON-RPC Module">
+        <notes>
+A datamodule to dispatch JSON-RPC requests in WEB(HTTP) applications using
+TJSONRPCHandler components.
+        </notes>
+        <notes>
+Selecting this module will open a dialog box with some options to select.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, HTTPDefs, websession, fpHTTP, fpWeb, fpjsonrpc, webjsonrpc;
+
+type
+  TJSONRPCModule1 = class(TJSONRPCModule)
+  private
+
+  public
+
+  end;
+
+var
+  JSONRPCModule1: TJSONRPCModule1;
+
+implementation
+
+{$R *.lfm}
+
+initialization
+  RegisterHTTPModule('RPC', TJSONRPCModule1);
+end.
+        </example>
+    </section>
+    <section name="Web Ext.Direct Module">
+        <notes>
+A datamodule to dispatch Ext.Direct requests in WEB(HTTP) applications using
+TJSONRPCHandler components.
+        </notes>
+        <notes>
+Selecting this module template produces the same dialog box as the JSONRPC module.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils, HTTPDefs, websession, fpHTTP, fpWeb, fpjsonrpc, 
+    webjsonrpc, fpextdirect;
+
+type
+  TExtDirectModule1 = class(TExtDirectModule)
+  private
+
+  public
+
+  end;
+
+var
+  ExtDirectModule1: TExtDirectModule1;
+
+implementation
+
+{$R *.lfm}
+
+initialization
+  RegisterHTTPModule('RPC', TExtDirectModule1);
+end.
+        </example>
+    </section>
+    <section name="Web Module">
+        <notes>
+A datamodule for WEB(HTTP) applications.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  SysUtils, Classes, httpdefs, fpHTTP, fpWeb;
+
+type
+  TFPWebModule1 = class(TFPWebModule)
+  private
+
+  public
+
+  end;
+
+var
+  FPWebModule1: TFPWebModule1;
+
+implementation
+
+{$R *.lfm}
+
+initialization
+  RegisterHTTPModule('TFPWebModule1', TFPWebModule1);
+end.
+        </example>
+        <notes>
+This is the same module template used for units in various HTTP projects.
+        </notes>
+    </section>
+    <section name="HTML Web Module">
+        <notes>
+A Web datamodule for producing strict HTML.
+        </notes>
+        <example>
+unit Unit1;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  SysUtils, Classes , HTTPDefs, websession, fpHTTP, htmlwriter, htmlelements, 
+    fphtml;
+
+type
+  TFPHTMLModule1 = class(TFPHTMLModule)
+  private
+
+  public
+
+  end;
+
+var
+  FPHTMLModule1: TFPHTMLModule1;
+
+implementation
+
+{$R *.lfm}
+
+initialization
+  RegisterHTTPModule('TFPHTMLModule1', TFPHTMLModule1);
+end.
+        </example>
+    </section>
+</kdoc>

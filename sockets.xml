@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Networking">
+    <notes>
+This is a document to describe Socket programming in OBJPAS for personal use.
+
+Below I will go through a couple *classes* which I personally think are
+important to remember and use.
+    </notes>
+    <wiki>Networking</wiki>, <wiki>Networking_libraries</wiki>
+    <class name="TInetServer" inherit="TSocketServer" unit="ssockets" package="fcl-net">
+        <notes>
+I believe this is one of the best FCL units for class-based socket programming.
+        </notes>
+        <example>
+type
+
+  { TServer }
+
+  TServer = class(TInetServer)
+  Protected
+    Procedure DoConnect(ASocket: TSocketStream); override;
+  end;
+
+var
+  sock: TServer;
+
+{ TServer }
+
+procedure TServer.DoConnect(ASocket: TSocketStream);
+var
+  buf: string;
+  size: integer;
+begin
+  WriteLn('Got connection!');
+  buf:='Testing from Pascal!'#13#10;
+  ASocket.WriteAnsiString(buf);
+  //ASocket.Write(buf[1],Length(buf));
+  ASocket.Free;
+  StopAccepting(False);
+end;
+
+begin
+  sock:=TServer.Create(3845);
+  sock.StartAccepting;
+  sock.Free;
+end.
+        </example>
+    </class>
+    <class name="TInetSocket" inherit="TSocketStream" unit="ssockets" package="fcl-net">
+        <notes>
+This should be the best FCL class for TCP client creation.
+        </notes>
+        <example>
+var
+  sock: TInetSocket;
+  buf: string;
+  size: Integer;
+
+Begin
+    sock:=TInetSocket.Create('127.0.0.1',3845);
+    buf:='Testing from Pascal!';
+    sock.Write(buf[1], Length(buf));
+    buf:='';
+    SetLength(buf,512);
+    size:=sock.Read(buf[1], 512);
+    sock.Free;
+    Write(buf);
+End.
+        </example>
+    </class>
+    <class name="TFPHttpClient" inherit="TFPCustomHTTPClient" unit="fphttpclient" package="fcl-web">
+        <notes>
+This has been the class which I have used multiple times as an HTTP Client.  This
+class appears to go through **ssockets** unit, so maybe that unit is preferable
+instead of **fpSock**.
+        </notes>
+        <example>
+with TFPHttpClient.Create(Nil) do
+  Try
+    AddHeader('Content-Type', 'text/plain');
+    RequestBody:=TStream.Create('Some string');
+    S:=Post(URL);
+    RequestBody.Free;
+    RequestBody:=Nil;
+  Finally
+    Free;
+  end;
+        </example>
+    </class>
+    <section name="Sending and Receiving structured data">
+        <notes>
+Here are some notes for how to pass structured data over a socket, TCP, Unix, etc...
+This is very useful for designing a simple protocol for two programs can easily
+talk with each other, or for interprocess communications on the same machine.  In
+some events, using HTTP or another existing protocol might be too heavyweight for
+the task you need to perform, think embedded applications, or high-speed
+microservices, where a persistent socket connection needs to be maintained for
+efficient data transfer.  Using RAW binary in the form of a Pascal *record* might
+just be the best choice for the job.  Below, will be an example server, and an
+example client in both Object Pascal and in Python.  I actually plan on using
+this knowledge in a future project, where my frontend is written in Python, but
+my backend code will be written in Object Pascal.
+        </notes>
+        <example>
+uses ssockets;
+
+type
+
+  { TServer }
+
+  TServer = class(TUnixServer)
+  Protected
+    Procedure DoConnect(ASocket: TSocketStream); override;
+  end;
+
+  TRequest = record
+    id: Integer;
+    op: byte;
+    data: string[80];
+  end;
+
+  TResponse = record
+    id: Integer;
+    status: byte;
+    data: string[80];
+  end;
+
+{ TServer }
+
+procedure TServer.DoConnect(ASocket: TSocketStream);
+var
+  req: TRequest;
+  resp: TResponse;
+  msg: string[80];
+begin
+  WriteLn('Got connection!');
+  repeat
+    ASocket.Read(req, SizeOf(req));
+    resp.id:=req.id;
+    resp.status:=200;
+    resp.data:='';
+    case req.op of
+      10: msg:=req.data;
+      20: resp.data:=msg;
+      60: resp.status:=128;
+    end;
+    ASocket.Write(resp, SizeOf(resp));
+  until req.op = 60;
+  ASocket.Free;
+  StopAccepting(False);
+end;
+
+var
+  sock: TServer;
+
+begin
+  sock:=TServer.Create('/tmp/tserver.sock');
+  sock.StartAccepting;
+  sock.Free;
+end.
+        </example>
+        <notes>
+It will be recommended to place both **TRequest** and **TResponse** types into
+a shared unit file to ensure that both the server and any clients have the same
+record type being passed around.  The structure of **TRequest** and **TResponse**
+can be in any format your application needs, however I do recommend using the *id*
+field as this will help both the server and client understand which requests are
+related to what responses.  In this example, I created an *op-code* based system,
+which will work similar to an RPC-like service.  Now onto the client code to test
+out this server code.  Also note this code can only handle a single client connection
+at a single time, and the connection does not close after each request/response
+cycle.  This could be placed into a thread to ensure that many clients can connect
+to a single server instance of course.
+        </notes>
+        <example>
+uses ssockets;
+
+const
+  TEST_MESSAGE = 'A test message to store on the server.';
+
+type
+  TRequest = record
+    id: Integer;
+    op: byte;
+    data: string[80];
+  end;
+
+  TResponse = record
+    id: Integer;
+    status: byte;
+    data: string[80];
+  end;
+
+procedure showResponse(resp: TResponse);
+begin
+  WriteLn('Response Id:   ',resp.id);
+  WriteLn('Response code: ',resp.status);
+  WriteLn('Response data: ',resp.data);
+end;
+
+var
+  sock: TUnixSocket;
+  req: TRequest;
+  resp: TResponse;
+
+begin
+  sock:=TUnixSocket.Create('/tmp/tserver.sock');
+  req.id:=1;
+  req.op:=10;
+  req.data:=TEST_MESSAGE;
+  sock.Write(req, SizeOf(req));
+  WriteLn('Send op code ',req.op,' with test message.');
+  sock.Read(resp, SizeOf(resp));
+  if req.id &lt;&gt; resp.id then
+    WriteLn('This should not occur in this example...');
+  showResponse(resp);
+  Inc(req.id);
+  req.op:=20;
+  req.data:='';
+  sock.Write(req, SizeOf(req));
+  WriteLn('Send op code ',req.op,'.');
+  sock.Read(resp, SizeOf(resp));
+  if req.id &lt;&gt; resp.id then
+    WriteLn('This should not occur in this example...');
+  showResponse(resp);
+  Inc(req.id);
+  req.op:=60;
+  req.data:='';
+  sock.Write(req, SizeOf(req));
+  WriteLn('Send op code ',req.op,'.');
+  sock.Read(resp, SizeOf(resp));
+  if req.id &lt;&gt; resp.id then
+    WriteLn('This should not occur in this example...');
+  showResponse(resp);
+  if resp.status = 128 then
+    WriteLn('We got back the expected status, as the server was shutdown.');
+  sock.Free;
+end.
+        </example>
+        <notes>
+That should be pretty easy to understand what's going on.  This will work with
+other programming languages such as Python, here's how to talk with this server
+using Python:
+        </notes>
+        <python>
+import socket, struct
+
+req = struct.Struct('IB80p') # This is the same for both request/response
+
+s = socket.socket(socket.AF_UNIX)
+s.connect('/tmp/tserver.sock')
+s.send(req.pack(1,10,'A test message sent from Python.'))
+buf = s.recv(100) # What is really strange is that we get back 3 additional bytes...
+print req.unpack(buf[:req.size]) # req.size = 85, SizeOf(TRequest) = 88 ??? Not sure why.
+s.send(req.pack(2,20,''))
+buf = s.recv(100)
+print req.unpack(buf[:req.size])
+s.send(req.pack(3,60,''))
+buf = s.recv(100)
+print req.unpack(buf[:req.size])
+s.close()
+        </python>
+        <notes>
+I am not entirely sure why, but the structure in Python has a size of 85, but
+the same structure in Object Pascal has a size of 88.  At first I thought it
+might have been the size of the Integer was different, but then this would
+displace both the Byte and the Pascal string.  I figure the Pascal string might
+be Unicode, which might explain the additional 3 bytes, but when this structure
+is passed and read by Python, it appears perfectly fine, expect Python wants a
+structure which is 3 bytes less than what Pascal is giving...  I will update this
+note once I find out more on why this is.
+        </notes>
+    </section>
+</kdoc>

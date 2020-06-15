@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Threading">
+    <notes>
+This document will contain some of my notes on Thread programming in OBJPAS.
+
+If using TThread without a GUI, through a command-line program, the following
+function from the `classes` unit should be called in the main thread loop:
+    </notes>
+    <example>
+function CheckSynchronize(timeout : longint=0) : boolean;
+{ Returns true if a thread method was synchronized. }
+    </example>
+    <wiki>Multithreaded_Application_Tutorial</wiki>
+    <class name="TThread" unit="classes" package="rtl">
+        <notes>
+This class should be sub-classed just like how it's done in Python.
+
+Furthermore the default template has a special uses clause for POSIX systems.
+        </notes>
+        <example>
+uses
+  {$IFDEF UNIX}{$IFDEF UseCThreads}
+  cthreads,
+  {$ENDIF}{$ENDIF}
+  Classes, SysUtils;
+        </example>
+        <notes>
+I am seeing mention that it is recommended to use cmem, but a forum post I read
+said otherwise, and that threading is just as fast or faster without using cmem.
+        </notes>
+    </class>
+    <example>
+unit mythread;
+
+{$mode objfpc}{$H+}
+
+interface
+
+uses
+  Classes, SysUtils;
+
+type
+
+  { TMyThread }
+
+  TMyThread = class(TThread)
+  private
+    procedure SayHello;
+  protected
+    procedure Execute; override;
+  public
+    constructor Create;
+  end;
+
+implementation
+
+{ TMyThread }
+
+procedure TMyThread.SayHello;
+begin
+  WriteLn('Hello from TMyThread!');
+end;
+
+procedure TMyThread.Execute;
+begin
+  WriteLn('Thread started.');
+  Sleep(3000);
+  Synchronize(@SayHello);
+end;
+
+constructor TMyThread.Create;
+begin
+  inherited Create(True);
+  FreeOnTerminate:=True;
+end;
+
+end.
+    </example>
+    <notes>
+Above is a sample unit file called **mythread**, below is how it can be started.
+    </notes>
+    <example>
+uses mythread;
+
+var
+  t: TMyThread;
+begin
+  t:=TMyThread.Create;
+  t.Start;
+  WriteLn('Thread started.');
+  repeat
+    Sleep(1500);
+    WriteLn('Checking sync...');
+    CheckSynchronize();
+  until t.Finished;
+end.
+    </example>
+    <notes>
+Threads in ObjectPascal are much more simplier to manage than threads in Python.
+    </notes>
+</kdoc>

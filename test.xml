@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Test Page">
+    <class name="TTestClass">
+        <method name="Create">This is the create method.</method>
+        <notes>
+ * Testing markdown.
+
+**This should be bold**
+        </notes>
+    </class>
+    <example>
+    var
+      t: TTestClass;
+
+    begin
+      t:=TTestClass.Create;
+      { Code here. }
+      t.Free;
+    end.
+    </example>
+    <class name="TExampleClass">
+        <notes>
+This is my test example class, **top secret**.
+        </notes>
+        <example>
+program test;
+
+var
+  t: TExampleClass;
+
+begin
+  t:=TExampleClass.Create;
+  { Code here. }
+  t.Free;
+end.
+        </example>
+    </class>
+    <notes>
+These are just some notes in-between class documentation.
+
+See, XSLT and XML can still be really useful!
+
+I put this together rather quickly as a note keeping system.
+    </notes>
+    <class name="TXSLTClass" inherit="TComponent">
+        <method name="Create">This is the creation method!</method>
+        <method name="Run">This is the magical run method!</method>
+        <notes>
+Here are some more top secret notes for this class.
+        </notes>
+    </class>
+</kdoc>

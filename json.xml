@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="JavaScript Object Notation">
+    <notes>
+JSON is a very popular data transfer format used on the Internet, namely in REST
+APIs.  In this document, I will explain how you can easily communicate with any
+existing REST service which uses JSON in **Object Pascal**.
+    </notes>
+    <class name="TJSONObject" inherit="TJSONData" unit="fpjson" package="fcl-json">
+        <method name="Strings">An array of strings in the current JSON node.</method>
+        <method name="Arrays">Returns a TJSONArray from a selected JSON array.</method>
+        <method name="Objects">Returns a new TJSONObject based on the JSON dictionary.</method>
+        <example>
+uses fphttpclient,fpjson,jsonparser;
+
+const
+  API_ENDPOINT = 'http://tech406.com/kdocs/test.json'; // Yes this exists! :D
+
+function GetURL(const URL: string): TJSONData;
+begin
+  with TFPHTTPClient.Create(Nil) do
+    try
+      //UserName:='REST-API-Username';  // For HTTP Auth-based REST APIs.
+      //Password:='REST-API-Password;
+      Result:=GetJSON(Get(URL));
+    finally
+      Free;
+    end;
+end;
+
+var
+  json: TJSONObject;
+  languages: TJSONArray;
+  i: Integer;
+
+begin
+  json:=TJSONObject(GetURL(API_ENDPOINT)); // Here we need to cast to a TJSONObject
+  WriteLn(json.Strings['title']);
+  languages:=json.Arrays['languages'];
+  for i:=0 to languages.Count-1 do
+    with languages.Objects[i] do
+      WriteLn(Strings['name'],': ',Strings['developer']);
+  json.Free;
+end.
+        </example>
+    </class>
+</kdoc>

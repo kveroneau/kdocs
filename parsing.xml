@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="String Parsing">
+    <notes>
+One out of the box module I really miss from Python is `shlex`, it allowed one
+to easily parse lines of code, and it was really customizable to the point where
+I was able to easily create a C-like language parser in it.  Although I mostly
+used it for it's built-in shell parsing, so it was able to take a line like this:
+
+    git commit -m "An example commit message."
+
+And spit back out `['git','commit','-m','An example commit message.']`, it knew
+how to handle quotes and parse UNIX shell commands with ease.  Originally I was
+going to attempt to port over the entire `shlex` Python module to Object Pascal,
+but I recently found an easy way to parse the above command with just 2 Pascal
+functions.  It is not as advanced as `shlex`, but it gets the job I need done.
+    </notes>
+    <example>
+uses strutils;
+
+function getString(var src: string): string;
+begin
+  src:=RightStr(src,Length(src)-1); // Get rid of the initial quote.
+  Result:=Copy2SymbDel(src, '"');
+end;
+
+function getToken(var src: string): string;
+begin
+  if src[1] = '"' then
+    Result:=getString(src)
+  else
+    Result:=Copy2SpaceDel(src);
+end;
+
+var
+  s: string;
+
+begin
+  s:='git commit -m "An example commit message."';
+  repeat
+    WriteLn(getToken(s));
+  until s='';
+end.
+    </example>
+    <section name="Command-line interpreter">
+        <notes>
+Sometimes when developing a command-line program, you need to have a basic command
+shell available for the end-user, or you'd like to develop a basic scripting
+language to parse a script file to perform some tasks.  In Python I enjoyed the
+ease of the `cmd` module, it made creating command-line shell programs an
+absolute breeze to make.  A similar unit does not seem to exist in Free Pascal,
+so this is some example code to show how to build a basic command interpreter in
+Pascal:
+        </notes>
+        <example>
+var
+  cmd, cmdline: string;
+
+begin
+  WriteLn('Example command-line shell program.');
+  repeat
+    Write('>>> ');
+    ReadLn(cmdline);
+    cmd:=getToken(cmdline);
+    case cmd of
+      'echo': WriteLn(getToken(cmdline));
+      'exit': WriteLn('Good-bye!');
+    else
+      WriteLn('?SYNTAX ERROR');
+    end;
+  until cmd='exit';
+end.
+        </example>
+        <notes>
+Using the above code with a TStream and/or file input shouldn't be too difficult.
+It is a very lightweight script interpreter when you don't need anything too
+advanced or complex for scripting in your program.  Updating the `getToken`
+function could allow for more complex parsing such as to check for parentheses or
+other common symbols.
+        </notes>
+    </section>
+</kdoc>

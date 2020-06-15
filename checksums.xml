@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="kdocs.xsl"?>
+<kdoc title="Checksums">
+    <notes>
+Checksums are used to determine data integrity, and ensure the data is as it is
+expected without corruption or flipped bits.  It is critical in many everyday
+applications, and hardware devices.  Behind the scenes your Hard Disk uses
+checksums on each sector to ensure the data has been both correctly written, and
+later read.  Other uses of checksums are for the purposes of making unique hashes.
+    </notes>
+    <section name="CRC">
+        <notes>
+One of the most popular and widely used checksums algorithms is the CRC32, it is
+used in a variety of file formats to ensure the data has not been corrupted.
+Free Pascal supports **CRC32**, **CRC64**, and even **CRC128**.  Below is an
+example program to play around with the concept of CRC checksums.
+        </notes>
+        <example>
+{$mode objfpc}{$H+}
+
+uses crc;
+
+type
+  header = packed record
+    vx: Array[0..2] of Char;
+    crc: LongWord;
+    crc64: QWord;
+    crc128: u128;
+    addr: Word;
+    xz: Byte;
+  end;
+
+var
+  checksum: LongWord;
+  s, s2: string;
+  hdr: header;
+  f: File of header;
+  c1,c2: u128;
+
+begin
+  s:='Hello World!';
+  s2:='Hello World';
+  checksum:=crc32(0, @s[1], Length(s));
+  WriteLn('CRC32=',checksum);
+  WriteLn('Size= ',SizeOf(checksum));
+  hdr.vx[0]:='C';
+  hdr.vx[1]:='R';
+  hdr.vx[2]:='C';
+  hdr.crc:=checksum;
+  hdr.crc64:=crc64(0, @s[1], Length(s));
+  hdr.crc128:=crc128(0, @s[1], Length(s));
+  hdr.addr:=$b800;
+  hdr.xz:=65;
+  Assign(f,'crctests.bin');
+  Rewrite(f);
+  Write(f,hdr);
+  Close(f);
+  WriteLn('CRC64=',hdr.crc64);
+  WriteLn('Size64=',SizeOf(hdr.crc64));
+  WriteLn('CRC128.hi=',hdr.crc128.hi,',CRC128.lo=',hdr.crc128.hi);
+  WriteLn('Size128=',SizeOf(hdr.crc128));
+  //WriteLn('GUID=',hdr.crc128.guid);
+  c1:=crc128(0,@s[1],Length(s));
+  c2:=crc128(0,@s2[1],Length(s));
+  if c1 = c2 then
+    WriteLn('CRC128 Checksums match!')
+  else
+    WriteLn('CRC128 Checksums do not match!');
+end.
+        </example>
+        <notes>
+I failed to find a *function* or *procedure* which will turn a tguid into a
+readable GUID string which can then be written to standard out.  Below explains
+the internal structure of the **u128**, an unsigned 128-bit Integer.
+        </notes>
+        <example>
+type
+       PGuid = ^TGuid;
+       TGuid = packed record
+          case integer of
+             1 : (
+                  Data1 : DWord;
+                  Data2 : word;
+                  Data3 : word;
+                  Data4 : array[0..7] of byte;
+                 );
+             2 : (
+                  D1 : DWord;
+                  D2 : word;
+                  D3 : word;
+                  D4 : array[0..7] of byte;
+                 );
+             3 : ( { uuid fields according to RFC4122 }
+                  time_low : dword;			// The low field of the timestamp
+                  time_mid : word;                      // The middle field of the timestamp
+                  time_hi_and_version : word;           // The high field of the timestamp multiplexed with the version number
+                  clock_seq_hi_and_reserved : byte;     // The high field of the clock sequence multiplexed with the variant
+                  clock_seq_low : byte;                 // The low field of the clock sequence
+                  node : array[0..5] of byte;           // The spatially unique node identifier
+                 );
+       end;
+
+       pu128 = ^u128;
+       u128 = packed record
+         case Integer of
+            0: (lo, hi: qword);
+            1: (guid: tguid);
+       end;
+        </example>
+        <notes>
+Not many languages have full support for 128-bit Integers, so if you wish to use
+a CRC128 with a different language, please be advised on this.  Python also only
+seems to have built-in support for *CRC32* within the built-in *binascii* module.
+
+Below is the generated **crctest.bin** file:
+
+    00000000  43 52 43 a3 1c 29 1c 66  98 44 d5 38 e6 34 54 51  |CRC..).f.D.8.4TQ|
+    00000010  13 eb 8d 59 dd 94 91 42  30 b8 eb 98 68 f2 87 00  |...Y...B0...h...|
+    00000020  b8 41                                             |.A|
+
+        </notes>
+    </section>
+</kdoc>

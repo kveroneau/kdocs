@@ -1,0 +1,4 @@
+{"title":"Example JSON for OBJPAS code example.",
+ "languages":[{"name":"Turbo Pascal","developer":"Borland"},
+              {"name":"Free Pascal","developer":"Free Pascal team"},
+              {"name":"Delphi","developer":"Embarcadero Technologies"}]}
