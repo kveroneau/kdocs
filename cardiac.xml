@@ -10,7 +10,7 @@ was used to show aspiring Computer Scientists how a computer processor works, an
 believe it or not, but it is still relevant til this day, as modern computers
 still work and process data in a similar manner, just with many many more op codes.
 
-[BitBucket Repo of source](https://bitbucket.org/kveroneau/cardiac/)
+[GitHub Repo of source](https://github.com/kveroneau/Cardiac)
 [Windows binary](Cardiac.zip)
 
 Here is the full source code for the Cardiac Computer Simulator:
